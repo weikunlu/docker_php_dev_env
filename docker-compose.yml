@@ -1,0 +1,56 @@
+version: '2'
+
+services:
+  database:
+    image: postgres:10.3-alpine
+    domainname: kkday.dev
+    container_name: kkday-db
+    volumes:
+      - ./dbdata:/var/lib/postgresql/data
+      - ./restoredb:/restoredb
+    environment:
+      - "POSTGRES_PASSWORD=postgres"
+    ports:
+      - 5432:5432
+    expose:
+      - 5432
+  cache:
+    image: redis:3.2.12-alpine3.8
+    domainname: kkday.dev
+    container_name: kkday-cache
+    ports:
+      - 6379:6379
+    expose:
+      - 6379
+
+  app:
+    build:
+      context: ./
+      dockerfile: app.dockerfile
+    working_dir: /var/www/html
+    domainname: kkday.dev
+    container_name: app
+    volumes:
+      - "${WORK_DIR}:/var/www/html"
+    environment:
+      - "DB_PORT=5432"
+      - "DB_HOST=kkday-db"
+      - "REDIS_PORT=6379"
+      - "REDIS_HOST=kkday-cache"
+    links:
+      - database
+      - cache
+
+  web:
+    build:
+      context: ./
+      dockerfile: web.dockerfile
+    working_dir: /var/www/html
+    domainname: kkday.dev
+    container_name: kkday-web
+    volumes_from:
+      - app
+    ports:
+      - 8080:80
+    links:
+      - app
