@@ -1,0 +1,4 @@
+FROM postgres:10.3-alpine
+ENV POSTGRES_USER devuser
+ENV POSTGRES_PASSWORD devuser
+ENV POSTGRES_DB kkdb

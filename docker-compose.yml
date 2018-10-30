@@ -1,15 +1,16 @@
 version: '2'
 
 services:
+
   database:
-    image: postgres:10.3-alpine
+    build:
+      context: ./
+      dockerfile: db.dockerfile
     domainname: kkday.dev
     container_name: kkday-db
     volumes:
       - ./dbdata:/var/lib/postgresql/data
       - ./restoredb:/restoredb
-    environment:
-      - "POSTGRES_PASSWORD=postgres"
     ports:
       - 5432:5432
     expose:
@@ -29,7 +30,7 @@ services:
       dockerfile: app.dockerfile
     working_dir: /var/www/html
     domainname: kkday.dev
-    container_name: app
+    container_name: kkday-app
     volumes:
       - "${WORK_DIR}:/var/www/html"
     environment:
@@ -54,3 +55,15 @@ services:
       - 8080:80
     links:
       - app
+
+  builder:
+    image: composer:latest
+    domainname: kkday.dev
+    container_name: kkday-build
+    volumes:
+      - "${WORK_DIR}:/var/www/html"
+    command: >
+      bash -c "composer install -d /var/www/html
+      && php /var/www/html/artisan migrate"
+    depends_on:
+        - app
